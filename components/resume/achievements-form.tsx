@@ -17,11 +17,9 @@ interface Achievement {
   description: string
 }
 
-interface AchievementsFormProps {
-  resumeId: string; // Add resumeId as a prop
-}
+interface AchievementsFormProps {}
 
-export default function AchievementsForm({ resumeId }: AchievementsFormProps) {
+export default function AchievementsForm({}: AchievementsFormProps) {
   const [achievements, setAchievements] = useState<Achievement[]>([
     {
       id: "1",

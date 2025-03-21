@@ -21,11 +21,9 @@ interface Experience {
   description: string
 }
 
-interface ExperienceFormProps {
-  resumeId: string; // Add resumeId as a prop
-}
+interface ExperienceFormProps {}
 
-export default function ExperienceForm({ resumeId }: ExperienceFormProps) {
+export default function ExperienceForm({}: ExperienceFormProps) {
   const [experiences, setExperiences] = useState<Experience[]>([
     {
       id: "1",

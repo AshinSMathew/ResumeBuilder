@@ -14,11 +14,9 @@ interface SkillCategory {
   skills: string[]
 }
 
-interface SkillsFormProps {
-  resumeId: string
-}
+interface SkillsFormProps {}
 
-export default function SkillsForm({ resumeId }: SkillsFormProps) {
+export default function SkillsForm({}: SkillsFormProps) {
   const [skillInput, setSkillInput] = useState("")
   const [categories, setCategories] = useState<SkillCategory[]>([
     {
@@ -33,7 +31,6 @@ export default function SkillsForm({ resumeId }: SkillsFormProps) {
   // Fetch existing skills on component mount
   useEffect(() => {
     const fetchSkills = async () => {
-      if (!resumeId) return;
       
       setIsLoading(true);
       try {
@@ -57,7 +54,7 @@ export default function SkillsForm({ resumeId }: SkillsFormProps) {
     };
 
     fetchSkills();
-  }, [resumeId]);
+  });
 
   const handleCategoryNameChange = (id: string, name: string) => {
     setCategories((prev) => prev.map((cat) => (cat.id === id ? { ...cat, name } : cat)))

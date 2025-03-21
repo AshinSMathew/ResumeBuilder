@@ -19,11 +19,9 @@ interface Certification {
   description: string
 }
 
-interface CertificationsFormProps {
-  resumeId: string; // Add resumeId as a prop
-}
+interface CertificationsFormProps {}
 
-export default function CertificationsForm({ resumeId }: CertificationsFormProps) {
+export default function CertificationsForm({}: CertificationsFormProps) {
   const [certifications, setCertifications] = useState<Certification[]>([
     {
       id: "1",

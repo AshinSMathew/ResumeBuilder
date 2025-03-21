@@ -18,11 +18,9 @@ interface Project {
   technologies: string
 }
 
-interface ProjectsFormProps {
-  resumeId: string; // Add resumeId as a prop
-}
+interface ProjectsFormProps {}
 
-export default function ProjectsForm({ resumeId }: ProjectsFormProps) {
+export default function ProjectsForm({}: ProjectsFormProps) {
   const [projects, setProjects] = useState<Project[]>([
     {
       id: "1",

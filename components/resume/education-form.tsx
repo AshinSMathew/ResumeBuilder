@@ -18,11 +18,9 @@ interface Education {
   description: string;
 }
 
-interface EducationFormProps {
-  resumeId: string; // Add resumeId as a prop
-}
+interface EducationFormProps {}
 
-export default function EducationForm({ resumeId }: EducationFormProps) {
+export default function EducationForm({}: EducationFormProps) {
   const [educations, setEducations] = useState<Education[]>([
     {
       id: "1",
