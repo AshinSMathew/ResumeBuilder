@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
         // Insert the data into the database with the looked-up user ID
         const result = await db(
-            'INSERT INTO resumes (full_name, email, phone_number, linkedin_url, github_url, portfolio_url, summary, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            'INSERT INTO personal_details (full_name, email, phone_number, linkedin_url, github_url, portfolio_url, summary, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
             [fullName, email, phoneNumber, linkedIn, github, portfolio, summary, userId]
         );
 

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Trash2, X, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/components/ui/use-toast"
 
 interface SkillCategory {
   id: string
@@ -17,94 +18,108 @@ interface SkillCategory {
 interface SkillsFormProps {}
 
 export default function SkillsForm({}: SkillsFormProps) {
+  const { toast } = useToast()
   const [skillInput, setSkillInput] = useState("")
-  const [categories, setCategories] = useState<SkillCategory[]>([
-    {
-      id: "1",
-      name: "Programming Languages",
-      skills: [],
-    },
-  ])
-  const [isLoading, setIsLoading] = useState(false)
+  const [categories, setCategories] = useState<SkillCategory[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
   // Fetch existing skills on component mount
   useEffect(() => {
     const fetchSkills = async () => {
-      
-      setIsLoading(true);
+      setIsLoading(true)
       try {
-        const response = await fetch(`/api/skills`);
+        const response = await fetch('/api/skills')
         
         if (!response.ok) {
-          throw new Error('Failed to fetch skills');
+          throw new Error('Failed to fetch skills')
         }
         
-        const data = await response.json();
+        const data = await response.json()
         
         if (data.categories && data.categories.length > 0) {
-          setCategories(data.categories);
+          setCategories(data.categories)
+        } else {
+          // Default category if none exist
+          setCategories([{
+            id: Date.now().toString(),
+            name: "Programming Languages",
+            skills: []
+          }])
         }
       } catch (error) {
-        console.error('Error fetching skills:', error);
-        // Show error message
+        console.error('Error fetching skills:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load skills",
+          variant: "destructive"
+        })
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchSkills();
-  });
+    fetchSkills()
+  }, [toast])
 
   const handleCategoryNameChange = (id: string, name: string) => {
-    setCategories((prev) => prev.map((cat) => (cat.id === id ? { ...cat, name } : cat)))
+    setCategories(prev => prev.map(cat => 
+      cat.id === id ? { ...cat, name } : cat
+    ))
   }
 
   const addSkill = (categoryId: string) => {
     if (skillInput.trim()) {
-      setCategories((prev) =>
-        prev.map((cat) => (cat.id === categoryId ? { ...cat, skills: [...cat.skills, skillInput.trim()] } : cat)),
+      setCategories(prev =>
+        prev.map(cat =>
+          cat.id === categoryId 
+            ? { ...cat, skills: [...cat.skills, skillInput.trim()] } 
+            : cat
+        )
       )
       setSkillInput("")
     }
   }
 
   const removeSkill = (categoryId: string, skillIndex: number) => {
-    setCategories((prev) =>
-      prev.map((cat) =>
+    setCategories(prev =>
+      prev.map(cat =>
         cat.id === categoryId
           ? {
               ...cat,
-              skills: cat.skills.filter((_, index) => index !== skillIndex),
+              skills: cat.skills.filter((_, index) => index !== skillIndex)
             }
-          : cat,
-      ),
+          : cat
+      )
     )
   }
 
   const addCategory = () => {
-    setCategories((prev) => [
+    setCategories(prev => [
       ...prev,
       {
         id: Date.now().toString(),
         name: "New Category",
-        skills: [],
-      },
+        skills: []
+      }
     ])
   }
 
   const removeCategory = (id: string) => {
     if (categories.length > 1) {
-      setCategories((prev) => prev.filter((cat) => cat.id !== id))
+      setCategories(prev => prev.filter(cat => cat.id !== id))
+    } else {
+      toast({
+        title: "Cannot remove",
+        description: "You must have at least one category",
+        variant: "destructive"
+      })
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-  
-    // Convert categories to the required multi-valued list format
-    const formattedData = categories.map(category => [category.name, ...category.skills]);
+    e.preventDefault()
+    setIsSaving(true)
   
     try {
       const response = await fetch('/api/skills', {
@@ -112,23 +127,29 @@ export default function SkillsForm({}: SkillsFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formattedData), // Send transformed data
-      });
+        body: JSON.stringify({ categories })
+      })
   
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('Failed to save skills')
       }
   
-      const data = await response.json();
-      alert(data.message); // Show success message
+      const data = await response.json()
+      toast({
+        title: "Success",
+        description: data.message || "Skills saved successfully"
+      })
     } catch (error) {
-      console.error('Error submitting form:', error);
-      alert('There was an error saving your skills.');
+      console.error('Error saving skills:', error)
+      toast({
+        title: "Error",
+        description: "There was an error saving your skills",
+        variant: "destructive"
+      })
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
-  
+  }
 
   if (isLoading) {
     return (
@@ -136,7 +157,7 @@ export default function SkillsForm({}: SkillsFormProps) {
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         <span className="ml-2 text-muted-foreground">Loading skills...</span>
       </div>
-    );
+    )
   }
 
   return (
@@ -146,12 +167,16 @@ export default function SkillsForm({}: SkillsFormProps) {
           <Card key={category.id} className="relative mb-4">
             <CardContent className="pt-6">
               <div className="absolute right-4 top-4 flex space-x-2">
-                {categories.length > 1 && (
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeCategory(category.id)}>
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Remove</span>
-                  </Button>
-                )}
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => removeCategory(category.id)}
+                  disabled={categories.length <= 1}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Remove</span>
+                </Button>
               </div>
 
               <div className="space-y-2">
@@ -161,6 +186,7 @@ export default function SkillsForm({}: SkillsFormProps) {
                   value={category.name}
                   onChange={(e) => handleCategoryNameChange(category.id, e.target.value)}
                   placeholder="e.g., Programming Languages, Tools, Soft Skills"
+                  required
                 />
               </div>
 
@@ -179,7 +205,12 @@ export default function SkillsForm({}: SkillsFormProps) {
                       }
                     }}
                   />
-                  <Button type="button" onClick={() => addSkill(category.id)} size="sm">
+                  <Button 
+                    type="button" 
+                    onClick={() => addSkill(category.id)} 
+                    size="sm"
+                    disabled={!skillInput.trim()}
+                  >
                     <Plus className="h-4 w-4" />
                     <span className="sr-only">Add</span>
                   </Button>
@@ -187,32 +218,45 @@ export default function SkillsForm({}: SkillsFormProps) {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {category.skills.map((skill, index) => (
-                  <Badge key={index} variant="secondary" className="px-3 py-1">
-                    {skill}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="ml-1 h-4 w-4 p-0"
-                      onClick={() => removeSkill(category.id, index)}
-                    >
-                      <X className="h-3 w-3" />
-                      <span className="sr-only">Remove</span>
-                    </Button>
-                  </Badge>
-                ))}
+                {category.skills.length > 0 ? (
+                  category.skills.map((skill, index) => (
+                    <Badge key={index} variant="secondary" className="px-3 py-1">
+                      {skill}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="ml-1 h-4 w-4 p-0"
+                        onClick={() => removeSkill(category.id, index)}
+                      >
+                        <X className="h-3 w-3" />
+                        <span className="sr-only">Remove</span>
+                      </Button>
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No skills added yet</p>
+                )}
               </div>
             </CardContent>
           </Card>
         ))}
 
-        <Button type="button" variant="outline" className="w-full mb-6" onClick={addCategory}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full mb-6" 
+          onClick={addCategory}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Add Skill Category
         </Button>
 
-        <Button type="submit" className="w-full" disabled={isSaving}>
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isSaving || categories.length === 0}
+        >
           {isSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

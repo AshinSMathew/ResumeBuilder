@@ -2,6 +2,60 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getEmailFromAuthToken } from "@/lib/utils";
 
+export async function GET(request: NextRequest) {
+  const email = getEmailFromAuthToken(request);
+  if (!email) {
+    return NextResponse.json(
+      { message: 'Unauthorized. Email not found.' },
+      { status: 401 }
+    );
+  }
+
+  try {
+    // Fetch the user ID
+    const userResult = await db('SELECT id FROM users WHERE email = $1', [email]);
+    if (!userResult || userResult.length === 0) {
+      return NextResponse.json(
+        { message: 'User not found with this email.' },
+        { status: 404 }
+      );
+    }
+    const userId = userResult[0].id;
+
+    // Get skills for the user
+    const skillsResult = await db(
+      'SELECT skill_name FROM skills WHERE user_id = $1',
+      [userId]
+    );
+
+    if (skillsResult.length === 0) {
+      return NextResponse.json(
+        { categories: [] },
+        { status: 200 }
+      );
+    }
+
+    // Transform the JSONB data to match frontend expectations
+    const skillData = skillsResult[0].skill_name;
+    const categories = Object.entries(skillData).map(([name, skills]) => ({
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name,
+      skills: Array.isArray(skills) ? skills : []
+    }));
+
+    return NextResponse.json(
+      { categories },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Database error:', error);
+    return NextResponse.json(
+      { message: 'Internal server error.' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   const email = getEmailFromAuthToken(request);
   if (!email) {
@@ -12,12 +66,12 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const skillsData = body;
+  const categories = body.categories;
 
   // Validate the input
-  if (!Array.isArray(skillsData)) {
+  if (!Array.isArray(categories)) {
     return NextResponse.json(
-      { message: 'Invalid input. Expected an array of skills.' },
+      { message: 'Invalid input. Expected an array of categories.' },
       { status: 400 }
     );
   }
@@ -33,15 +87,15 @@ export async function POST(request: NextRequest) {
   const userId = userResult[0].id;
 
   try {
-    // Transform skillsData into a JSON object
-    const skillsJson = skillsData.reduce((acc, [category, ...skills]) => {
-      acc[category] = skills;
+    // Transform categories into a JSON object
+    const skillsJson = categories.reduce((acc, category) => {
+      acc[category.name] = category.skills;
       return acc;
     }, {});
 
     // Check if the user already has a row in the skills table
     const existingSkills = await db(
-      'SELECT skills FROM skills WHERE user_id = $1',
+      'SELECT id FROM skills WHERE user_id = $1',
       [userId]
     );
 
@@ -51,19 +105,19 @@ export async function POST(request: NextRequest) {
         `UPDATE skills
          SET skill_name = $1
          WHERE user_id = $2`,
-        [JSON.stringify(skillsJson), userId]
+        [skillsJson, userId]
       );
     } else {
       // Insert a new row
       await db(
         `INSERT INTO skills (user_id, skill_name)
          VALUES ($1, $2)`,
-        [userId, JSON.stringify(skillsJson)]
+        [userId, skillsJson]
       );
     }
 
     return NextResponse.json(
-      { message: 'Skills details submitted successfully!' },
+      { message: 'Skills saved successfully!' },
       { status: 201 }
     );
   } catch (error) {
