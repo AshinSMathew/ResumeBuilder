@@ -2,58 +2,70 @@
 
 import { useState, useEffect, forwardRef } from "react"
 
-interface User {
-  name?: string
-  email?: string
-  phone?: string
-  linkedin?: string
-  github?: string
-  website?: string
-  summary?: string
-}
-
-interface Skill {
-  category: string
-  skills: string
+interface Education {
+  id?: number
+  institution: string
+  degree: string
+  fieldOfStudy?: string
+  startDate: string
+  endDate?: string
+  description?: string
 }
 
 interface Experience {
+  id?: number
   company: string
   position: string
-  location: string
-  start_year: string
-  end_year?: string
+  location?: string
+  startDate: string
+  endDate?: string
+  current?: boolean
   description: string
-}
-
-interface Education {
-  institution: string
-  degree: string
-  field_of_study?: string
-  start_year: string
-  end_year?: string
 }
 
 interface Project {
-  title: string
+  name: string
   technologies: string
   description: string
-  year: string
+  startDate: string
+  link?: string
 }
 
 interface Certification {
-  title: string
+  name: string
   issuer: string
-  year: string
+  date: string
+  description?: string
+  credentialId?: string
+  credentialURL?: string
+}
+
+interface Achievement {
+  title: string
+  organization: string
+  date: string
+  description: string
 }
 
 interface ResumeData {
-  user?: User
-  skills?: Skill[]
-  experiences?: Experience[]
+  user?: {
+    name?: string
+    email?: string
+    phone?: string
+    linkedin?: string
+    github?: string
+    website?: string
+    summary?: string
+  }
+  skills?: {
+    category: string
+    skills: string[]
+  }[]
   educations?: Education[]
+  experiences?: Experience[]
   projects?: Project[]
   certifications?: Certification[]
+  achievements?: Achievement[]
 }
 
 interface ResumePreviewProps {
@@ -71,22 +83,22 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         try {
           const response = await fetch("/api/preview")
           if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.message || "Failed to fetch resume data")
+            throw new Error('Failed to fetch resume data')
           }
           const data = await response.json()
           setResumeData(data)
-          setLoading(false)
         } catch (error) {
           console.error("Error fetching resume:", error)
-          const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
-          setError(errorMessage)
+          setError(error instanceof Error ? error.message : 'An unknown error occurred')
+        } finally {
           setLoading(false)
         }
       }
 
       fetchResumeData()
     }, [])
+
+    const resolvedRef = forwardedRef || ref
 
     if (loading) {
       return (
@@ -115,69 +127,53 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       )
     }
 
-    const userData = resumeData.user || {}
-
-    // Process skills data
-    const groupedSkills: Record<string, string[]> = {}
-
-    if (resumeData.skills && resumeData.skills.length > 0) {
-      resumeData.skills.forEach((item) => {
-        if (!groupedSkills[item.category]) {
-          groupedSkills[item.category] = []
-        }
-        groupedSkills[item.category].push(item.skills)
-      })
-    }
-
-    // Use the forwarded ref from parent or the one from forwardRef
-    const resolvedRef = forwardedRef || ref
-
     return (
       <div ref={resolvedRef} className="bg-white p-6 shadow-md rounded-lg print:shadow-none font-['Georgia']">
         <div className="mx-auto max-w-4xl space-y-6">
           {/* Header */}
           <header className="border-b border-black pb-4 text-center">
-            <h1 className="text-3xl font-bold text-black uppercase tracking-wide">{userData.name || "John Doe"}</h1>
+            <h1 className="text-3xl font-bold text-black uppercase tracking-wide">
+              {resumeData.user?.name || "Your Name"}
+            </h1>
 
             <div className="mt-3 text-black">
               <p className="text-sm">
-                {userData.email && userData.email}
-                {userData.email && userData.phone && " | "}
-                {userData.phone && userData.phone}
+                {resumeData.user?.email && resumeData.user.email}
+                {resumeData.user?.email && resumeData.user?.phone && " | "}
+                {resumeData.user?.phone && resumeData.user.phone}
               </p>
 
               <p className="mt-1 text-sm">
-                {userData.linkedin && <span>{userData.linkedin}</span>}
-                {userData.linkedin && (userData.github || userData.website) && " | "}
-                {userData.github && <span>{userData.github}</span>}
-                {userData.github && userData.website && " | "}
-                {userData.website && <span>{userData.website}</span>}
+                {resumeData.user?.linkedin && <span>{resumeData.user.linkedin}</span>}
+                {resumeData.user?.linkedin && (resumeData.user?.github || resumeData.user?.website) && " | "}
+                {resumeData.user?.github && <span>{resumeData.user.github}</span>}
+                {resumeData.user?.github && resumeData.user?.website && " | "}
+                {resumeData.user?.website && <span>{resumeData.user.website}</span>}
               </p>
             </div>
           </header>
 
           {/* Summary */}
-          {userData.summary && (
+          {resumeData.user?.summary && (
             <section>
               <h2 className="mb-2 text-lg font-bold text-black uppercase tracking-wide border-b border-black pb-1">
                 Professional Summary
               </h2>
-              <p className="text-black text-sm leading-relaxed">{userData.summary}</p>
+              <p className="text-black text-sm leading-relaxed">{resumeData.user.summary}</p>
             </section>
           )}
 
           {/* Skills */}
-          {Object.keys(groupedSkills).length > 0 && (
+          {resumeData.skills && resumeData.skills.length > 0 && (
             <section>
               <h2 className="mb-2 text-lg font-bold text-black uppercase tracking-wide border-b border-black pb-1">
                 Skills
               </h2>
               <div className="text-sm">
-                {Object.entries(groupedSkills).map(([category, skills], index) => (
-                  <div key={category} className="mb-2">
-                    <span className="font-bold text-black">{category}: </span>
-                    <span className="text-black">{skills.join(", ")}</span>
-                    {index < Object.entries(groupedSkills).length - 1 && <br />}
+                {resumeData.skills.map((skillGroup, index) => (
+                  <div key={index} className="mb-2">
+                    <span className="font-bold text-black">{skillGroup.category}: </span>
+                    <span className="text-black">{skillGroup.skills.join(", ")}</span>
                   </div>
                 ))}
               </div>
@@ -196,7 +192,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-bold">{exp.position}</h3>
                       <span className="text-sm">
-                        {exp.start_year} - {exp.end_year || "Present"}
+                        {exp.startDate} - {exp.current ? "Present" : exp.endDate}
                       </span>
                     </div>
 
@@ -231,11 +227,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-bold">{edu.degree}</h3>
                       <span className="text-sm">
-                        {edu.start_year} - {edu.end_year || "Present"}
+                        {edu.startDate} - {edu.endDate || "Present"}
                       </span>
                     </div>
                     <p className="text-sm">{edu.institution}</p>
-                    {edu.field_of_study && <p className="text-sm italic">{edu.field_of_study}</p>}
+                    {edu.fieldOfStudy && <p className="text-sm italic">{edu.fieldOfStudy}</p>}
+                    {edu.description && <p className="text-sm mt-1">{edu.description}</p>}
                   </div>
                 ))}
               </div>
@@ -252,14 +249,23 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                 {resumeData.projects.map((project, index) => (
                   <div key={index} className="text-black">
                     <div className="flex justify-between items-baseline">
-                      <h3 className="font-bold">{project.title}</h3>
-                      <span className="text-sm">{project.year}</span>
+                      <h3 className="font-bold">{project.name}</h3>
+                      <span className="text-sm">{project.startDate}</span>
                     </div>
 
                     <p className="text-sm">
                       <span className="font-bold">Technologies: </span>
                       {project.technologies}
                     </p>
+
+                    {project.link && (
+                      <p className="text-sm">
+                        <span className="font-bold">Link: </span>
+                        <a href={project.link} className="text-blue-600 hover:underline">
+                          {project.link}
+                        </a>
+                      </p>
+                    )}
 
                     <p className="mt-1 text-sm">{project.description}</p>
                   </div>
@@ -278,10 +284,46 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                 {resumeData.certifications.map((cert, index) => (
                   <div key={index} className="text-black">
                     <div className="flex justify-between items-baseline">
-                      <h3 className="font-bold">{cert.title}</h3>
-                      <span className="text-sm">{cert.year}</span>
+                      <h3 className="font-bold">{cert.name}</h3>
+                      <span className="text-sm">{cert.date}</span>
                     </div>
                     <p className="text-sm">{cert.issuer}</p>
+                    {cert.description && <p className="text-sm mt-1">{cert.description}</p>}
+                    {cert.credentialId && (
+                      <p className="text-sm">
+                        <span className="font-bold">Credential ID: </span>
+                        {cert.credentialId}
+                      </p>
+                    )}
+                    {cert.credentialURL && (
+                      <p className="text-sm">
+                        <span className="font-bold">URL: </span>
+                        <a href={cert.credentialURL} className="text-blue-600 hover:underline">
+                          {cert.credentialURL}
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Achievements */}
+          {resumeData.achievements && resumeData.achievements.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-lg font-bold text-black uppercase tracking-wide border-b border-black pb-1">
+                Achievements
+              </h2>
+              <div className="space-y-2">
+                {resumeData.achievements.map((ach, index) => (
+                  <div key={index} className="text-black">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-bold">{ach.title}</h3>
+                      <span className="text-sm">{ach.date}</span>
+                    </div>
+                    <p className="text-sm italic">{ach.organization}</p>
+                    <p className="text-sm mt-1">{ach.description}</p>
                   </div>
                 ))}
               </div>
