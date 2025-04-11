@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,35 @@ export default function PersonalInfoForm() {
     portfolio: "",
     summary: "",
   });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPersonalDetails = async () => {
+      try {
+        const response = await fetch('/api/personalInfo');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data) {
+            setFormData({
+              fullName: data.data.fullName || "",
+              email: data.data.email || "",
+              phoneNumber: data.data.phoneNumber || "",
+              linkedIn: data.data.linkedIn || "",
+              github: data.data.github || "",
+              portfolio: data.data.portfolio || "",
+              summary: data.data.summary || "",
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching personal details:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPersonalDetails();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -34,32 +63,37 @@ export default function PersonalInfoForm() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit personal information');
+        throw new Error('Failed to save personal information');
       }
 
       const data = await response.json();
       alert(data.message);
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('There was an error submitting the form.');
+      alert('There was an error saving your information.');
     }
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">Loading your information...</div>;
+  }
 
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full Name</Label>
+          <Label htmlFor="fullName">Full Name*</Label>
           <Input
             id="fullName"
             name="fullName"
             value={formData.fullName}
             onChange={handleChange}
             placeholder="John Doe"
+            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email*</Label>
           <Input
             id="email"
             name="email"
@@ -67,6 +101,7 @@ export default function PersonalInfoForm() {
             value={formData.email}
             onChange={handleChange}
             placeholder="john.doe@example.com"
+            required
           />
         </div>
       </div>
@@ -134,4 +169,3 @@ export default function PersonalInfoForm() {
     </div>
   )
 }
-
