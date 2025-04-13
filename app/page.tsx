@@ -35,7 +35,7 @@ export default function Home() {
           </div>
           <div className="mt-12">
             <img
-              src="/placeholder.svg?height=400&width=800"
+              src="/resume.jpg?height=400&width=800"
               alt="Resume Builder Preview"
               className="rounded-lg shadow-lg mx-auto"
             />
