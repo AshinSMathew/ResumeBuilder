@@ -7,12 +7,11 @@ import { Card } from "@/components/ui/card"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Edit, Download, Share } from "lucide-react"
 import ResumePreview from "@/components/resume/resume-preview"
-import { toPng } from 'html-to-image'
-import jsPDF from 'jspdf'
+import { jsPDF } from "jspdf"
+import html2canvas from "html2canvas"
 
 export default function PreviewPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState("preview")
   const resumeRef = useRef<HTMLDivElement>(null)
   const [isDownloading, setIsDownloading] = useState(false)
 
@@ -22,53 +21,44 @@ export default function PreviewPage() {
 
   const handleDownload = async () => {
     if (!resumeRef.current) return
-    
+
     try {
       setIsDownloading(true)
-      
-      // Create a PNG from the resume element
-      const dataUrl = await toPng(resumeRef.current, { 
-        quality: 1,
-        backgroundColor: 'white',
-        style: {
-          margin: '0',
-          padding: '0'
-        }
+      const canvas = await html2canvas(resumeRef.current, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
       })
-      
-      // Create PDF with proper dimensions
-      const imgProps = await getImageProperties(dataUrl)
+
       const pdf = new jsPDF({
-        orientation: imgProps.height > imgProps.width ? 'portrait' : 'landscape',
-        unit: 'px',
-        format: [imgProps.width, imgProps.height]
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
       })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+
+      const canvasRatio = canvas.height / canvas.width
+      const pdfRatio = pdfHeight / pdfWidth
       
-      // Add the image to the PDF
-      pdf.addImage(dataUrl, 'PNG', 0, 0, imgProps.width, imgProps.height)
-      
-      // Save the PDF with the user's name or a default name
-      pdf.save('resume.pdf')
+      let imgWidth = pdfWidth
+      let imgHeight = pdfWidth * canvasRatio
+
+      if (imgHeight > pdfHeight) {
+        imgHeight = pdfHeight
+        imgWidth = pdfHeight / canvasRatio
+      }
+      pdf.addImage(imgData, 'PNG', (pdfWidth - imgWidth) / 2, (pdfHeight - imgHeight) / 2, imgWidth, imgHeight)
+      pdf.save("resume.pdf")
     } catch (error) {
-      console.error('Error generating PDF:', error)
-      alert('Failed to generate PDF. Please try again.')
+      console.error("Error generating PDF:", error)
+      alert("Failed to generate PDF. Please try again.")
     } finally {
       setIsDownloading(false)
     }
-  }
-
-  // Helper function to get image dimensions
-  const getImageProperties = (dataUrl: string): Promise<{width: number, height: number}> => {
-    return new Promise((resolve) => {
-      const img = new Image()
-      img.onload = () => {
-        resolve({
-          width: img.width,
-          height: img.height
-        })
-      }
-      img.src = dataUrl
-    })
   }
 
   return (
@@ -84,12 +74,7 @@ export default function PreviewPage() {
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleDownload}
-              disabled={isDownloading}
-            >
+            <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading}>
               {isDownloading ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin inline-block">↻</span>
