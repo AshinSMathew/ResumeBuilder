@@ -54,6 +54,7 @@ Create a file named `.env.local` in the root directory.
 Paste the following into it:
 
 DATABASE_URL=your-neondb-connection-string
+
 JWT_SECRET=your-jwt-secret-key
 *(Replace with actual values)*
 
