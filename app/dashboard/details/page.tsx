@@ -13,14 +13,21 @@ import ExperienceForm from "@/components/resume/experience-form"
 import ProjectsForm from "@/components/resume/projects-form"
 import CertificationsForm from "@/components/resume/certifications-form"
 import AchievementsForm from "@/components/resume/achievements-form"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function DetailsPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("personal-info")
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleSaveAndPreview = () => {
-    // In a real app, you would save the form data here
-    router.push("/dashboard/preview")
+    setIsSaving(true)
+
+    // Simulate saving process
+    setTimeout(() => {
+      setIsSaving(false)
+      router.push("/dashboard/preview")
+    }, 1000)
   }
 
   return (
@@ -31,22 +38,38 @@ export default function DetailsPage() {
           <p className="text-muted-foreground">Fill in your information to create your resume</p>
         </div>
 
-        <Card>
+        <Card className="shadow-md">
           <CardHeader>
             <CardTitle>Resume Information</CardTitle>
             <CardDescription>Complete all sections to create a comprehensive resume</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
-                <TabsTrigger value="personal-info">Personal</TabsTrigger>
-                <TabsTrigger value="education">Education</TabsTrigger>
-                <TabsTrigger value="skills">Skills</TabsTrigger>
-                <TabsTrigger value="experience">Experience</TabsTrigger>
-                <TabsTrigger value="projects">Projects</TabsTrigger>
-                <TabsTrigger value="certifications">Certifications</TabsTrigger>
-                <TabsTrigger value="achievements">Achievements</TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto pb-2">
+                <TabsList className="flex w-full min-w-max">
+                  <TabsTrigger value="personal-info" className="flex-1">
+                    Personal
+                  </TabsTrigger>
+                  <TabsTrigger value="education" className="flex-1">
+                    Education
+                  </TabsTrigger>
+                  <TabsTrigger value="skills" className="flex-1">
+                    Skills
+                  </TabsTrigger>
+                  <TabsTrigger value="experience" className="flex-1">
+                    Experience
+                  </TabsTrigger>
+                  <TabsTrigger value="projects" className="flex-1">
+                    Projects
+                  </TabsTrigger>
+                  <TabsTrigger value="certifications" className="flex-1">
+                    Certifications
+                  </TabsTrigger>
+                  <TabsTrigger value="achievements" className="flex-1">
+                    Achievements
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="personal-info" className="space-y-4">
                 <PersonalInfoForm />
@@ -81,10 +104,19 @@ export default function DetailsPage() {
 
         <div className="flex justify-end space-x-4">
           <Button variant="outline">Save Draft</Button>
-          <Button onClick={handleSaveAndPreview}>Save & Preview</Button>
+          <Button onClick={handleSaveAndPreview} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <span className="h-4 w-4 mr-2 animate-spin rounded-full border-b-2 border-white"></span>
+                Saving...
+              </>
+            ) : (
+              "Save & Preview"
+            )}
+          </Button>
         </div>
       </div>
+      <Toaster />
     </DashboardLayout>
   )
 }
-

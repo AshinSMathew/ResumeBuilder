@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Trash2, X, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
+import LoadingSpinner from "@/components/loading-spinner"
 
 interface SkillCategory {
   id: string
@@ -15,9 +18,7 @@ interface SkillCategory {
   skills: string[]
 }
 
-interface SkillsFormProps {}
-
-export default function SkillsForm({}: SkillsFormProps) {
+export default function SkillsForm() {
   const { toast } = useToast()
   const [skillInput, setSkillInput] = useState("")
   const [categories, setCategories] = useState<SkillCategory[]>([])
@@ -29,30 +30,32 @@ export default function SkillsForm({}: SkillsFormProps) {
     const fetchSkills = async () => {
       setIsLoading(true)
       try {
-        const response = await fetch('/api/skills')
-        
+        const response = await fetch("/api/skills")
+
         if (!response.ok) {
-          throw new Error('Failed to fetch skills')
+          throw new Error("Failed to fetch skills")
         }
-        
+
         const data = await response.json()
-        
+
         if (data.categories && data.categories.length > 0) {
           setCategories(data.categories)
         } else {
           // Default category if none exist
-          setCategories([{
-            id: Date.now().toString(),
-            name: "Programming Languages",
-            skills: []
-          }])
+          setCategories([
+            {
+              id: Date.now().toString(),
+              name: "Programming Languages",
+              skills: [],
+            },
+          ])
         }
       } catch (error) {
-        console.error('Error fetching skills:', error)
+        console.error("Error fetching skills:", error)
         toast({
           title: "Error",
           description: "Failed to load skills",
-          variant: "destructive"
+          variant: "destructive",
         })
       } finally {
         setIsLoading(false)
@@ -63,56 +66,50 @@ export default function SkillsForm({}: SkillsFormProps) {
   }, [toast])
 
   const handleCategoryNameChange = (id: string, name: string) => {
-    setCategories(prev => prev.map(cat => 
-      cat.id === id ? { ...cat, name } : cat
-    ))
+    setCategories((prev) => prev.map((cat) => (cat.id === id ? { ...cat, name } : cat)))
   }
 
   const addSkill = (categoryId: string) => {
     if (skillInput.trim()) {
-      setCategories(prev =>
-        prev.map(cat =>
-          cat.id === categoryId 
-            ? { ...cat, skills: [...cat.skills, skillInput.trim()] } 
-            : cat
-        )
+      setCategories((prev) =>
+        prev.map((cat) => (cat.id === categoryId ? { ...cat, skills: [...cat.skills, skillInput.trim()] } : cat)),
       )
       setSkillInput("")
     }
   }
 
   const removeSkill = (categoryId: string, skillIndex: number) => {
-    setCategories(prev =>
-      prev.map(cat =>
+    setCategories((prev) =>
+      prev.map((cat) =>
         cat.id === categoryId
           ? {
               ...cat,
-              skills: cat.skills.filter((_, index) => index !== skillIndex)
+              skills: cat.skills.filter((_, index) => index !== skillIndex),
             }
-          : cat
-      )
+          : cat,
+      ),
     )
   }
 
   const addCategory = () => {
-    setCategories(prev => [
+    setCategories((prev) => [
       ...prev,
       {
         id: Date.now().toString(),
         name: "New Category",
-        skills: []
-      }
+        skills: [],
+      },
     ])
   }
 
   const removeCategory = (id: string) => {
     if (categories.length > 1) {
-      setCategories(prev => prev.filter(cat => cat.id !== id))
+      setCategories((prev) => prev.filter((cat) => cat.id !== id))
     } else {
       toast({
         title: "Cannot remove",
         description: "You must have at least one category",
-        variant: "destructive"
+        variant: "destructive",
       })
     }
   }
@@ -120,31 +117,32 @@ export default function SkillsForm({}: SkillsFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
-  
+
     try {
-      const response = await fetch('/api/skills', {
-        method: 'POST',
+      const response = await fetch("/api/skills", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ categories })
+        body: JSON.stringify({ categories }),
       })
-  
+
       if (!response.ok) {
-        throw new Error('Failed to save skills')
+        throw new Error("Failed to save skills")
       }
-  
+
       const data = await response.json()
       toast({
         title: "Success",
-        description: data.message || "Skills saved successfully"
+        description: data.message || "Skills saved successfully",
+        variant: "success",
       })
     } catch (error) {
-      console.error('Error saving skills:', error)
+      console.error("Error saving skills:", error)
       toast({
         title: "Error",
         description: "There was an error saving your skills",
-        variant: "destructive"
+        variant: "destructive",
       })
     } finally {
       setIsSaving(false)
@@ -154,8 +152,7 @@ export default function SkillsForm({}: SkillsFormProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Loading skills...</span>
+        <LoadingSpinner text="Loading skills..." />
       </div>
     )
   }
@@ -167,10 +164,10 @@ export default function SkillsForm({}: SkillsFormProps) {
           <Card key={category.id} className="relative mb-4">
             <CardContent className="pt-6">
               <div className="absolute right-4 top-4 flex space-x-2">
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => removeCategory(category.id)}
                   disabled={categories.length <= 1}
                 >
@@ -205,12 +202,7 @@ export default function SkillsForm({}: SkillsFormProps) {
                       }
                     }}
                   />
-                  <Button 
-                    type="button" 
-                    onClick={() => addSkill(category.id)} 
-                    size="sm"
-                    disabled={!skillInput.trim()}
-                  >
+                  <Button type="button" onClick={() => addSkill(category.id)} size="sm" disabled={!skillInput.trim()}>
                     <Plus className="h-4 w-4" />
                     <span className="sr-only">Add</span>
                   </Button>
@@ -242,21 +234,12 @@ export default function SkillsForm({}: SkillsFormProps) {
           </Card>
         ))}
 
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="w-full mb-6" 
-          onClick={addCategory}
-        >
+        <Button type="button" variant="outline" className="w-full mb-6" onClick={addCategory}>
           <Plus className="mr-2 h-4 w-4" />
           Add Skill Category
         </Button>
 
-        <Button 
-          type="submit" 
-          className="w-full" 
-          disabled={isSaving || categories.length === 0}
-        >
+        <Button type="submit" className="w-full" disabled={isSaving || categories.length === 0}>
           {isSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

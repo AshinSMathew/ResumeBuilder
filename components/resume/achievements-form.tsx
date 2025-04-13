@@ -1,118 +1,146 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import type React from "react"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent } from "@/components/ui/card"
+import { Plus, Trash2, Loader2 } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import LoadingSpinner from "@/components/loading-spinner"
 
 interface Achievement {
-  id: string;
-  title: string;
-  organization: string;
-  date: string;
-  description: string;
+  id: string
+  title: string
+  organization: string
+  date: string
+  description: string
 }
 
 export default function AchievementsForm() {
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [achievements, setAchievements] = useState<Achievement[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     const fetchAchievements = async () => {
       try {
-        const response = await fetch('/api/achievements');
+        const response = await fetch("/api/achievements")
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json()
           if (data.achievements && data.achievements.length > 0) {
-            setAchievements(data.achievements.map((ach: any) => ({
-              id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-              ...ach
-            })));
+            setAchievements(
+              data.achievements.map((ach: any) => ({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                ...ach,
+              })),
+            )
           } else {
-            setAchievements([createEmptyAchievement()]);
+            setAchievements([createEmptyAchievement()])
           }
         }
       } catch (error) {
-        console.error('Error fetching achievements:', error);
-        setAchievements([createEmptyAchievement()]);
+        console.error("Error fetching achievements:", error)
+        setAchievements([createEmptyAchievement()])
+        toast({
+          title: "Error",
+          description: "Failed to load achievements",
+          variant: "destructive",
+        })
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchAchievements();
-  }, []);
+    fetchAchievements()
+  }, [toast])
 
   const createEmptyAchievement = (): Achievement => ({
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
     title: "",
     organization: "",
     date: "",
-    description: ""
-  });
+    description: "",
+  })
 
   const handleChange = (id: string, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setAchievements((prev) => prev.map((ach) => (ach.id === id ? { ...ach, [name]: value } : ach)));
-  };
+    const { name, value } = e.target
+    setAchievements((prev) => prev.map((ach) => (ach.id === id ? { ...ach, [name]: value } : ach)))
+  }
 
   const addAchievement = () => {
-    setAchievements((prev) => [...prev, createEmptyAchievement()]);
-  };
+    setAchievements((prev) => [...prev, createEmptyAchievement()])
+  }
 
   const removeAchievement = (id: string) => {
     if (achievements.length > 1) {
-      setAchievements((prev) => prev.filter((ach) => ach.id !== id));
+      setAchievements((prev) => prev.filter((ach) => ach.id !== id))
+    } else {
+      toast({
+        title: "Cannot remove",
+        description: "You must have at least one achievement",
+        variant: "destructive",
+      })
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
+    setIsSaving(true)
 
-    const achievementsToSave = achievements.map(({ id, ...rest }) => rest);
+    const achievementsToSave = achievements.map(({ id, ...rest }) => rest)
 
     try {
-      const response = await fetch('/api/achievements', {
-        method: 'POST',
+      const response = await fetch("/api/achievements", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ achievements: achievementsToSave }),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok")
       }
 
-      const data = await response.json();
-      alert(data.message);
+      const data = await response.json()
+      toast({
+        title: "Success",
+        description: data.message || "Achievements saved successfully",
+        variant: "success",
+      })
     } catch (error) {
-      console.error('Error submitting form:', error);
-      alert('There was an error submitting the form.');
+      console.error("Error submitting form:", error)
+      toast({
+        title: "Error",
+        description: "There was an error saving your achievements",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
     }
-  };
+  }
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner text="Loading achievements..." />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit}>
         {achievements.map((achievement) => (
-          <Card key={achievement.id} className="relative">
+          <Card key={achievement.id} className="relative mb-4">
             <CardContent className="pt-6">
               <div className="absolute right-4 top-4 flex space-x-2">
                 {achievements.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeAchievement(achievement.id)}
-                  >
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeAchievement(achievement.id)}>
                     <Trash2 className="h-4 w-4" />
                     <span className="sr-only">Remove</span>
                   </Button>
@@ -171,14 +199,22 @@ export default function AchievementsForm() {
           </Card>
         ))}
 
-        <Button type="button" variant="outline" className="w-full" onClick={addAchievement}>
+        <Button type="button" variant="outline" className="w-full mb-4" onClick={addAchievement}>
           <Plus className="mr-2 h-4 w-4" />
           Add Achievement
         </Button>
-        <Button type="submit" className="w-full mt-4">
-          Save Achievements
+
+        <Button type="submit" className="w-full" disabled={isSaving}>
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Achievements"
+          )}
         </Button>
       </form>
     </div>
-  );
+  )
 }
