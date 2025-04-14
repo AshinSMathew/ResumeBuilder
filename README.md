@@ -68,4 +68,4 @@ Visit `http://localhost:3000` in your browser to access the app.
 
 ## Hosted Link
 
-The project is live at: [ResumeBuilder](https://resume-builder-iota-two.vercel.app)
+The project is live at: [ResumeBuilder](https://vitabuilder.vercel.app/)
