@@ -398,7 +398,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
                   {project.link && (
                     <span style={{ fontSize: "10pt" }}>
                       <a href={project.link} className="text-blue-800 hover:underline">
-                        github.com/user/repo
+                        {project.link}
                       </a>
                     </span>
                   )}
