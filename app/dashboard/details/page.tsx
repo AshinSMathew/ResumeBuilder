@@ -22,8 +22,6 @@ export default function DetailsPage() {
 
   const handleSaveAndPreview = () => {
     setIsSaving(true)
-
-    // Simulate saving process
     setTimeout(() => {
       setIsSaving(false)
       router.push("/dashboard/preview")
@@ -103,15 +101,14 @@ export default function DetailsPage() {
         </Card>
 
         <div className="flex justify-end space-x-4">
-          <Button variant="outline">Save Draft</Button>
           <Button onClick={handleSaveAndPreview} disabled={isSaving}>
             {isSaving ? (
               <>
                 <span className="h-4 w-4 mr-2 animate-spin rounded-full border-b-2 border-white"></span>
-                Saving...
+                Showing Preview...
               </>
             ) : (
-              "Save & Preview"
+              "Show Preview"
             )}
           </Button>
         </div>

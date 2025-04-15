@@ -11,45 +11,52 @@ interface ResumeData {
     github?: string;
     website?: string;
     summary?: string;
+    location?: string;
   };
   skills?: {
     category: string;
     skills: string[];
   }[];
-  experiences?: {
-    company: string;
-    position: string;
-    location?: string;
-    startYear: string;
-    endYear?: string;
-    description: string;
-  }[];
   educations?: {
     institution: string;
     degree: string;
     fieldOfStudy?: string;
-    startYear: string;
-    endYear?: string;
+    startDate: string;
+    endDate?: string;
+    description?: string;
+  }[];
+  experiences?: {
+    company: string;
+    position: string;
+    location?: string;
+    startDate: string;
+    endDate?: string;
+    current?: boolean;
+    description: string;
   }[];
   projects?: {
-    title: string;
+    name: string;
     technologies: string;
     description: string;
-    year: string;
+    startDate: string;
+    link?: string;
   }[];
   certifications?: {
-    title: string;
+    name: string;
     issuer: string;
-    year: string;
+    date: string;
+    description?: string;
   }[];
   achievements?: {
     title: string;
+    organization: string;
     date: string;
     description: string;
   }[];
 }
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0; // Disable cache completely
 
 export async function GET(request: NextRequest) {
   const userEmail = getEmailFromAuthToken(request);
@@ -113,6 +120,7 @@ export async function GET(request: NextRequest) {
     const certifications = parseJsonbField(userData.certifications);
     const achievements = parseJsonbField(userData.achievements);
 
+    // Transform the data to match the expected structure in the ResumePreview component
     const resumeData: ResumeData = {
       user: {
         name: personalDetail.full_name || userResult[0].name,
@@ -121,17 +129,58 @@ export async function GET(request: NextRequest) {
         linkedin: personalDetail.linkedin_url,
         github: personalDetail.github_url,
         website: personalDetail.portfolio_url,
-        summary: personalDetail.summary
+        summary: personalDetail.summary,
+        location: personalDetail.location
       },
       skills: skills.length > 0 ? skills : undefined,
-      experiences: experiences.length > 0 ? experiences : undefined,
-      educations: educations.length > 0 ? educations : undefined,
-      projects: projects.length > 0 ? projects : undefined,
-      certifications: certifications.length > 0 ? certifications : undefined,
-      achievements: achievements.length > 0 ? achievements : undefined
+      // Map API data to expected format in the component
+      experiences: experiences.length > 0 ? experiences.map((exp: any) => ({
+        company: exp.company,
+        position: exp.position,
+        location: exp.location,
+        startDate: exp.startYear || exp.startDate,
+        endDate: exp.endYear || exp.endDate,
+        current: exp.current || false,
+        description: exp.description || ""
+      })) : undefined,
+      educations: educations.length > 0 ? educations.map((edu: any) => ({
+        institution: edu.institution,
+        degree: edu.degree,
+        fieldOfStudy: edu.fieldOfStudy,
+        startDate: edu.startYear || edu.startDate,
+        endDate: edu.endYear || edu.endDate,
+        description: edu.description || ""
+      })) : undefined,
+      projects: projects.length > 0 ? projects.map((proj: any) => ({
+        name: proj.title || proj.name,
+        technologies: proj.technologies,
+        description: proj.description || "",
+        startDate: proj.year || proj.startDate,
+        link: proj.link
+      })) : undefined,
+      certifications: certifications.length > 0 ? certifications.map((cert: any) => ({
+        name: cert.title || cert.name,
+        issuer: cert.issuer,
+        date: cert.year || cert.date,
+        description: cert.description
+      })) : undefined,
+      achievements: achievements.length > 0 ? achievements.map((ach: any) => ({
+        title: ach.title,
+        organization: ach.organization || "",
+        date: ach.date,
+        description: ach.description || ""
+      })) : undefined
     };
 
-    return NextResponse.json(resumeData);
+    // Set cache control headers to prevent browser caching
+    const headers = new Headers();
+    headers.set('Cache-Control', 'no-store, max-age=0');
+    headers.set('Pragma', 'no-cache');
+    headers.set('Expires', '0');
+
+    return NextResponse.json(resumeData, {
+      headers: headers
+    });
   } catch (error) {
     console.error('Error fetching resume data:', error);
     return NextResponse.json(

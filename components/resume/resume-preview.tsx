@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, forwardRef } from "react"
+import { useState, useEffect, forwardRef, useCallback } from "react"
 import { Loader2 } from "lucide-react"
 
 interface Education {
@@ -81,54 +80,79 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchResumeData = async () => {
-      try {
-        const response = await fetch("/api/preview")
-        if (!response.ok) {
-          throw new Error("Failed to fetch resume data")
+  const fetchResumeData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/preview?t=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
-        const data = await response.json()
-        setResumeData(data)
-      } catch (error) {
-        console.error("Error fetching resume:", error)
-        setError(error instanceof Error ? error.message : "An unknown error occurred")
-      } finally {
-        setLoading(false)
+      })
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch resume data")
       }
+      
+      const apiData = await response.json()
+      
+      const transformedData: ResumeData = {
+        user: apiData.user,
+        skills: apiData.skills,
+        educations: apiData.educations?.map((edu: any) => ({
+          institution: edu.institution,
+          degree: edu.degree,
+          fieldOfStudy: edu.fieldOfStudy,
+          startDate: edu.startYear || edu.startDate,
+          endDate: edu.endYear || edu.endDate,
+          description: edu.description || ""
+        })) || [],
+        experiences: apiData.experiences?.map((exp: any) => ({
+          company: exp.company,
+          position: exp.position,
+          location: exp.location,
+          startDate: exp.startYear || exp.startDate,
+          endDate: exp.endYear || exp.endDate,
+          current: exp.current || false,
+          description: exp.description || ""
+        })) || [],
+        projects: apiData.projects?.map((proj: any) => ({
+          name: proj.title || proj.name,
+          technologies: proj.technologies,
+          description: proj.description || "",
+          startDate: proj.year || proj.startDate,
+          link: proj.link
+        })) || [],
+        certifications: apiData.certifications?.map((cert: any) => ({
+          name: cert.title || cert.name,
+          issuer: cert.issuer,
+          date: cert.year || cert.date,
+          description: cert.description
+        })) || [],
+        achievements: apiData.achievements?.map((ach: any) => ({
+          title: ach.title,
+          organization: ach.organization || "",
+          date: ach.date,
+          description: ach.description || ""
+        })) || []
+      }
+      
+      setResumeData(transformedData)
+      setError(null)
+    } catch (error) {
+      console.error("Error fetching resume:", error)
+      setError(error instanceof Error ? error.message : "An unknown error occurred")
+    } finally {
+      setLoading(false)
     }
-
-    fetchResumeData()
   }, [])
 
+  useEffect(() => {
+    fetchResumeData()
+  }, [fetchResumeData])
+
   const resolvedRef = forwardedRef || ref
-
-  if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-black" />
-          <p className="text-black">Loading resume data...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-red-600">Error: {error}</p>
-      </div>
-    )
-  }
-
-  if (!resumeData) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-black">No resume data found. Please create your resume.</p>
-      </div>
-    )
-  }
 
   const formatBulletPoints = (description: string) => {
     return description
@@ -141,11 +165,38 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
       ))
   }
 
+  if (loading && !resumeData) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-black" />
+          <p className="text-black">Loading resume data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !resumeData) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center gap-4">
+        <p className="text-red-600">Error: {error}</p>
+      </div>
+    )
+  }
+
+  if (!resumeData) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center gap-4">
+        <p className="text-black">No resume data found. Please create your resume.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex justify-center">
       <div
         ref={resolvedRef}
-        className="bg-white text-gray-900 font-['Calibri'] shadow-md mx-auto"
+        className="mx-auto bg-white font-['Calibri'] text-gray-900 shadow-md"
         style={{
           width: "210mm",
           minHeight: "297mm", 
@@ -159,7 +210,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
       >
         {/* Header - Name */}
         <h1
-          className="text-center font-bold mb-2"
+          className="mb-2 text-center font-bold"
           style={{
             fontSize: "22pt",
             color: "#2c3e50",
@@ -170,7 +221,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
 
         {/* Contact Information Line */}
         <div
-          className="text-center mb-4"
+          className="mb-4 text-center"
           style={{
             fontSize: "10pt",
             color: "#4a5568",
@@ -192,7 +243,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {/* LinkedIn and GitHub */}
         {(resumeData.user?.linkedin || resumeData.user?.github) && (
           <div
-            className="text-center mb-6"
+            className="mb-6 text-center"
             style={{
               fontSize: "10pt",
               color: "#4a5568",
@@ -220,7 +271,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {resumeData.user?.summary && (
           <section className="mb-5">
             <h2
-              className="mb-2 pb-1 border-b border-gray-300"
+              className="mb-2 border-b border-gray-300 pb-1"
               style={{
                 fontSize: "14pt",
                 fontWeight: "bold",
@@ -248,7 +299,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {resumeData.experiences && resumeData.experiences.length > 0 && (
           <section className="mb-5">
             <h2
-              className="mb-2 pb-1 border-b border-gray-300"
+              className="mb-2 border-b border-gray-300 pb-1"
               style={{
                 fontSize: "14pt",
                 fontWeight: "bold",
@@ -261,7 +312,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
             </h2>
             {resumeData.experiences.map((exp, index) => (
               <div key={index} className="mb-4">
-                <div className="flex justify-between items-baseline">
+                <div className="flex items-baseline justify-between">
                   <div>
                     <span
                       style={{
@@ -291,7 +342,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
                   </span>
                 </div>
                 {exp.description && (
-                  <ul className="list-disc pl-5 mt-1" style={{ color: "#4a5568" }}>
+                  <ul className="mt-1 list-disc pl-5" style={{ color: "#4a5568" }}>
                     {formatBulletPoints(exp.description)}
                   </ul>
                 )}
@@ -304,7 +355,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {resumeData.educations && resumeData.educations.length > 0 && (
           <section className="mb-5">
             <h2
-              className="mb-2 pb-1 border-b border-gray-300"
+              className="mb-2 border-b border-gray-300 pb-1"
               style={{
                 fontSize: "14pt",
                 fontWeight: "bold",
@@ -317,7 +368,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
             </h2>
             {resumeData.educations.map((edu, index) => (
               <div key={index} className="mb-3">
-                <div className="flex justify-between items-baseline">
+                <div className="flex items-baseline justify-between">
                   <div>
                     <span
                       style={{
@@ -352,7 +403,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
                   </span>
                 </div>
                 {edu.description && (
-                  <ul className="list-disc pl-5 mt-1" style={{ color: "#4a5568" }}>
+                  <ul className="mt-1 list-disc pl-5" style={{ color: "#4a5568" }}>
                     {formatBulletPoints(edu.description)}
                   </ul>
                 )}
@@ -365,7 +416,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {resumeData.projects && resumeData.projects.length > 0 && (
           <section className="mb-5">
             <h2
-              className="mb-2 pb-1 border-b border-gray-300"
+              className="mb-2 border-b border-gray-300 pb-1"
               style={{
                 fontSize: "14pt",
                 fontWeight: "bold",
@@ -378,7 +429,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
             </h2>
             {resumeData.projects.map((project, index) => (
               <div key={index} className="mb-3">
-                <div className="flex justify-between items-baseline">
+                <div className="flex items-baseline justify-between">
                   <div>
                     <span
                       style={{
@@ -398,12 +449,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
                     </span>
                   )}
                 </div>
-                <ul className="list-disc pl-5 mt-1" style={{ color: "#4a5568" }}>
+                <ul className="mt-1 list-disc pl-5" style={{ color: "#4a5568" }}>
                   {formatBulletPoints(project.description)}
                 </ul>
                 {project.technologies && (
                   <p
-                    className="pl-5 mb-1"
+                    className="mb-1 pl-5"
                     style={{
                       fontSize: "11pt",
                       color: "#4a5568",
@@ -422,7 +473,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {resumeData.achievements && resumeData.achievements.length > 0 && (
           <section className="mb-5">
             <h2
-              className="mb-2 pb-1 border-b border-gray-300"
+              className="mb-2 border-b border-gray-300 pb-1"
               style={{
                 fontSize: "14pt",
                 fontWeight: "bold",
@@ -435,7 +486,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
             </h2>
             {resumeData.achievements.map((ach, index) => (
               <div key={index} className="mb-3">
-                <div className="flex justify-between items-baseline">
+                <div className="flex items-baseline justify-between">
                   <div>
                     <span
                       style={{
@@ -463,7 +514,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
                 </div>
                 {ach.description && (
                   <p
-                    className="pl-5 mb-1"
+                    className="mb-1 pl-5"
                     style={{
                       fontSize: "11pt",
                       color: "#4a5568",
@@ -481,7 +532,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {resumeData.skills && resumeData.skills.length > 0 && (
           <section className="mb-5">
             <h2
-              className="mb-2 pb-1 border-b border-gray-300"
+              className="mb-2 border-b border-gray-300 pb-1"
               style={{
                 fontSize: "14pt",
                 fontWeight: "bold",
@@ -516,7 +567,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {resumeData.certifications && resumeData.certifications.length > 0 && (
           <section className="mb-5">
             <h2
-              className="mb-2 pb-1 border-b border-gray-300"
+              className="mb-2 border-b border-gray-300 pb-1"
               style={{
                 fontSize: "14pt",
                 fontWeight: "bold",
@@ -529,7 +580,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
             </h2>
             {resumeData.certifications.map((cert, index) => (
               <div key={index} className="mb-3">
-                <div className="flex justify-between items-baseline">
+                <div className="flex items-baseline justify-between">
                   <span
                     style={{
                       fontSize: "12pt",
@@ -559,7 +610,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
                 </p>
                 {cert.description && (
                   <p
-                    className="pl-5 mb-1"
+                    className="mb-1 pl-5"
                     style={{
                       fontSize: "11pt",
                       color: "#4a5568",

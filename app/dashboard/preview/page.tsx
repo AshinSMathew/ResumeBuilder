@@ -21,51 +21,39 @@ export default function PreviewPage() {
 
   const handleDownload = async () => {
     if (!resumeRef.current) return
-
+  
     try {
       setIsDownloading(true)
-
-      // Get the resume container
+  
       const resumeContainer = resumeRef.current
-
-      // Create a new jsPDF instance
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
       })
-
-      // Get dimensions
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-
-      // Calculate the number of pages needed
+  
+      const margin = 10
+      const pdfWidth = pdf.internal.pageSize.getWidth() - (margin * 2)
+      const pdfHeight = pdf.internal.pageSize.getHeight() - (margin * 2)
       const containerHeight = resumeContainer.scrollHeight
       const containerWidth = resumeContainer.scrollWidth
       const scale = pdfWidth / containerWidth
       const scaledHeight = containerHeight * scale
       const totalPages = Math.ceil(scaledHeight / pdfHeight)
 
-      // Create canvas for each page
       for (let i = 0; i < totalPages; i++) {
-        // Only add a new page if it's not the first page
         if (i > 0) {
           pdf.addPage()
         }
-
-        // Calculate the portion of the container to capture for this page
+  
         const yPosition = (pdfHeight / scale) * i
-
-        // Create a clone of the container to manipulate for this page
+  
         const tempContainer = resumeContainer.cloneNode(true) as HTMLElement
         tempContainer.style.transform = `translateY(-${yPosition}px)`
         tempContainer.style.height = `${pdfHeight / scale}px`
         tempContainer.style.overflow = "hidden"
 
-        // Temporarily append to the document to capture
         document.body.appendChild(tempContainer)
-
-        // Capture this portion as canvas
         const canvas = await html2canvas(tempContainer, {
           scale: 2,
           logging: false,
@@ -74,16 +62,11 @@ export default function PreviewPage() {
           windowHeight: pdfHeight / scale,
           y: yPosition,
         })
-
-        // Remove the temporary element
         document.body.removeChild(tempContainer)
 
-        // Add the image to the PDF
         const imgData = canvas.toDataURL("image/png")
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
+        pdf.addImage(imgData, "PNG", margin, margin, pdfWidth, pdfHeight)
       }
-
-      // Save the PDF
       pdf.save("resume.pdf")
     } catch (error) {
       console.error("Error generating PDF:", error)
