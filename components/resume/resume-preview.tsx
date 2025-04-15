@@ -148,30 +148,32 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         className="bg-white text-gray-900 font-['Calibri'] shadow-md mx-auto"
         style={{
           width: "210mm",
-          height: "297mm",
+          minHeight: "297mm", 
           padding: "15mm",
           boxSizing: "border-box",
           position: "relative",
           lineHeight: "1.15",
+          pageBreakAfter: "always",
+          pageBreakInside: "avoid",
         }}
       >
         {/* Header - Name */}
-        <h1 
-          className="text-center font-bold mb-2" 
-          style={{ 
+        <h1
+          className="text-center font-bold mb-2"
+          style={{
             fontSize: "22pt",
-            color: "#2c3e50"
+            color: "#2c3e50",
           }}
         >
           {resumeData.user?.name || "John Doe"}
         </h1>
 
         {/* Contact Information Line */}
-        <div 
-          className="text-center mb-4" 
-          style={{ 
+        <div
+          className="text-center mb-4"
+          style={{
             fontSize: "10pt",
-            color: "#4a5568"
+            color: "#4a5568",
           }}
         >
           {resumeData.user?.location && <span>{resumeData.user.location} | </span>}
@@ -186,28 +188,28 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
             </span>
           )}
         </div>
-        
+
         {/* LinkedIn and GitHub */}
         {(resumeData.user?.linkedin || resumeData.user?.github) && (
-          <div 
-            className="text-center mb-6" 
-            style={{ 
+          <div
+            className="text-center mb-6"
+            style={{
               fontSize: "10pt",
-              color: "#4a5568"
+              color: "#4a5568",
             }}
           >
             {resumeData.user?.linkedin && (
               <span>
                 <a href={resumeData.user.linkedin} className="text-blue-800 hover:underline">
-                  linkedin.com/in/{resumeData.user.linkedin.split('/').pop()}
+                  linkedin.com/in/{resumeData.user.linkedin.split("/").pop()}
                 </a>
-                {resumeData.user?.github && ' | '}
+                {resumeData.user?.github && " | "}
               </span>
             )}
             {resumeData.user?.github && (
               <span>
                 <a href={resumeData.user.github} className="text-blue-800 hover:underline">
-                  github.com/{resumeData.user.github.split('/').pop()}
+                  github.com/{resumeData.user.github.split("/").pop()}
                 </a>
               </span>
             )}
@@ -217,24 +219,24 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {/* Summary */}
         {resumeData.user?.summary && (
           <section className="mb-5">
-            <h2 
-              className="mb-2 pb-1 border-b border-gray-300" 
-              style={{ 
-                fontSize: "14pt", 
+            <h2
+              className="mb-2 pb-1 border-b border-gray-300"
+              style={{
+                fontSize: "14pt",
                 fontWeight: "bold",
                 color: "#2c3e50",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
               }}
             >
               PROFESSIONAL SUMMARY
             </h2>
-            <p 
-              className="mb-2" 
-              style={{ 
-                fontSize: "11pt", 
+            <p
+              className="mb-2"
+              style={{
+                fontSize: "11pt",
                 lineHeight: "1.2",
-                color: "#4a5568"
+                color: "#4a5568",
               }}
             >
               {resumeData.user.summary}
@@ -245,14 +247,14 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {/* Experience Section */}
         {resumeData.experiences && resumeData.experiences.length > 0 && (
           <section className="mb-5">
-            <h2 
-              className="mb-2 pb-1 border-b border-gray-300" 
-              style={{ 
-                fontSize: "14pt", 
+            <h2
+              className="mb-2 pb-1 border-b border-gray-300"
+              style={{
+                fontSize: "14pt",
                 fontWeight: "bold",
                 color: "#2c3e50",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
               }}
             >
               EXPERIENCE
@@ -261,41 +263,35 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
               <div key={index} className="mb-4">
                 <div className="flex justify-between items-baseline">
                   <div>
-                    <span 
-                      style={{ 
-                        fontSize: "12pt", 
+                    <span
+                      style={{
+                        fontSize: "12pt",
                         fontWeight: "bold",
-                        color: "#2c3e50"
+                        color: "#2c3e50",
                       }}
                     >
                       {exp.position}
                     </span>
-                    {exp.company && (
-                      <span style={{ fontSize: "11pt", color: "#4a5568" }}>
-                        , {exp.company}
-                      </span>
-                    )}
+                    {exp.company && <span style={{ fontSize: "11pt", color: "#4a5568" }}>, {exp.company}</span>}
                     {exp.location && (
                       <span style={{ fontSize: "11pt", color: "#4a5568" }}>
-                        {" – "}{exp.location}
+                        {" – "}
+                        {exp.location}
                       </span>
                     )}
                   </div>
-                  <span 
-                    style={{ 
-                      fontSize: "10pt", 
+                  <span
+                    style={{
+                      fontSize: "10pt",
                       color: "#718096",
-                      fontWeight: "normal"
+                      fontWeight: "normal",
                     }}
                   >
                     {exp.startDate} – {exp.current ? "Present" : exp.endDate}
                   </span>
                 </div>
                 {exp.description && (
-                  <ul 
-                    className="list-disc pl-5 mt-1" 
-                    style={{ color: "#4a5568" }}
-                  >
+                  <ul className="list-disc pl-5 mt-1" style={{ color: "#4a5568" }}>
                     {formatBulletPoints(exp.description)}
                   </ul>
                 )}
@@ -307,14 +303,14 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {/* Education Section */}
         {resumeData.educations && resumeData.educations.length > 0 && (
           <section className="mb-5">
-            <h2 
-              className="mb-2 pb-1 border-b border-gray-300" 
-              style={{ 
-                fontSize: "14pt", 
+            <h2
+              className="mb-2 pb-1 border-b border-gray-300"
+              style={{
+                fontSize: "14pt",
                 fontWeight: "bold",
                 color: "#2c3e50",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
               }}
             >
               EDUCATION
@@ -323,41 +319,40 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
               <div key={index} className="mb-3">
                 <div className="flex justify-between items-baseline">
                   <div>
-                    <span 
-                      style={{ 
-                        fontSize: "12pt", 
+                    <span
+                      style={{
+                        fontSize: "12pt",
                         fontWeight: "bold",
-                        color: "#2c3e50"
+                        color: "#2c3e50",
                       }}
                     >
                       {edu.institution}
                     </span>
                     {edu.degree && (
                       <span style={{ fontSize: "11pt", color: "#4a5568" }}>
-                        {", "}{edu.degree}
+                        {", "}
+                        {edu.degree}
                       </span>
                     )}
                     {edu.fieldOfStudy && (
                       <span style={{ fontSize: "11pt", color: "#4a5568" }}>
-                        {" in "}{edu.fieldOfStudy}
+                        {" in "}
+                        {edu.fieldOfStudy}
                       </span>
                     )}
                   </div>
-                  <span 
-                    style={{ 
-                      fontSize: "10pt", 
+                  <span
+                    style={{
+                      fontSize: "10pt",
                       color: "#718096",
-                      fontWeight: "normal"
+                      fontWeight: "normal",
                     }}
                   >
                     {edu.startDate} – {edu.endDate || "Present"}
                   </span>
                 </div>
                 {edu.description && (
-                  <ul 
-                    className="list-disc pl-5 mt-1" 
-                    style={{ color: "#4a5568" }}
-                  >
+                  <ul className="list-disc pl-5 mt-1" style={{ color: "#4a5568" }}>
                     {formatBulletPoints(edu.description)}
                   </ul>
                 )}
@@ -369,14 +364,14 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {/* Projects Section */}
         {resumeData.projects && resumeData.projects.length > 0 && (
           <section className="mb-5">
-            <h2 
-              className="mb-2 pb-1 border-b border-gray-300" 
-              style={{ 
-                fontSize: "14pt", 
+            <h2
+              className="mb-2 pb-1 border-b border-gray-300"
+              style={{
+                fontSize: "14pt",
                 fontWeight: "bold",
                 color: "#2c3e50",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
               }}
             >
               PROJECTS
@@ -385,11 +380,11 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
               <div key={index} className="mb-3">
                 <div className="flex justify-between items-baseline">
                   <div>
-                    <span 
-                      style={{ 
-                        fontSize: "12pt", 
+                    <span
+                      style={{
+                        fontSize: "12pt",
                         fontWeight: "bold",
-                        color: "#2c3e50"
+                        color: "#2c3e50",
                       }}
                     >
                       {project.name}
@@ -403,18 +398,15 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
                     </span>
                   )}
                 </div>
-                <ul 
-                  className="list-disc pl-5 mt-1" 
-                  style={{ color: "#4a5568" }}
-                >
+                <ul className="list-disc pl-5 mt-1" style={{ color: "#4a5568" }}>
                   {formatBulletPoints(project.description)}
                 </ul>
                 {project.technologies && (
-                  <p 
+                  <p
                     className="pl-5 mb-1"
-                    style={{ 
-                      fontSize: "11pt", 
-                      color: "#4a5568"
+                    style={{
+                      fontSize: "11pt",
+                      color: "#4a5568",
                     }}
                   >
                     <span style={{ fontWeight: "bold" }}>Tools Used: </span>
@@ -429,14 +421,14 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {/* Publications Section */}
         {resumeData.achievements && resumeData.achievements.length > 0 && (
           <section className="mb-5">
-            <h2 
-              className="mb-2 pb-1 border-b border-gray-300" 
-              style={{ 
-                fontSize: "14pt", 
+            <h2
+              className="mb-2 pb-1 border-b border-gray-300"
+              style={{
+                fontSize: "14pt",
                 fontWeight: "bold",
                 color: "#2c3e50",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
               }}
             >
               PUBLICATIONS
@@ -445,35 +437,36 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
               <div key={index} className="mb-3">
                 <div className="flex justify-between items-baseline">
                   <div>
-                    <span 
-                      style={{ 
-                        fontSize: "12pt", 
+                    <span
+                      style={{
+                        fontSize: "12pt",
                         fontWeight: "bold",
-                        color: "#2c3e50"
+                        color: "#2c3e50",
                       }}
                     >
                       {ach.title}
                     </span>
                     <span style={{ fontSize: "11pt", color: "#4a5568" }}>
-                      {", "}{ach.organization}
+                      {", "}
+                      {ach.organization}
                     </span>
                   </div>
-                  <span 
-                    style={{ 
-                      fontSize: "10pt", 
+                  <span
+                    style={{
+                      fontSize: "10pt",
                       color: "#718096",
-                      fontWeight: "normal"
+                      fontWeight: "normal",
                     }}
                   >
                     {ach.date}
                   </span>
                 </div>
                 {ach.description && (
-                  <p 
+                  <p
                     className="pl-5 mb-1"
-                    style={{ 
-                      fontSize: "11pt", 
-                      color: "#4a5568"
+                    style={{
+                      fontSize: "11pt",
+                      color: "#4a5568",
                     }}
                   >
                     {ach.description}
@@ -487,31 +480,29 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {/* Technologies/Skills Section */}
         {resumeData.skills && resumeData.skills.length > 0 && (
           <section className="mb-5">
-            <h2 
-              className="mb-2 pb-1 border-b border-gray-300" 
-              style={{ 
-                fontSize: "14pt", 
+            <h2
+              className="mb-2 pb-1 border-b border-gray-300"
+              style={{
+                fontSize: "14pt",
                 fontWeight: "bold",
                 color: "#2c3e50",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
               }}
             >
               SKILLS
             </h2>
             <div className="pl-1">
               {resumeData.skills.map((skillGroup, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="mb-2"
-                  style={{ 
-                    fontSize: "11pt", 
-                    color: "#4a5568"
+                  style={{
+                    fontSize: "11pt",
+                    color: "#4a5568",
                   }}
                 >
-                  <span style={{ fontWeight: "bold", color: "#2c3e50" }}>
-                    {skillGroup.category}: 
-                  </span>
+                  <span style={{ fontWeight: "bold", color: "#2c3e50" }}>{skillGroup.category}:</span>
                   <span className="ml-1">
                     {Array.isArray(skillGroup.skills) ? skillGroup.skills.join(", ") : skillGroup.skills}
                   </span>
@@ -524,14 +515,14 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
         {/* Certifications Section */}
         {resumeData.certifications && resumeData.certifications.length > 0 && (
           <section className="mb-5">
-            <h2 
-              className="mb-2 pb-1 border-b border-gray-300" 
-              style={{ 
-                fontSize: "14pt", 
+            <h2
+              className="mb-2 pb-1 border-b border-gray-300"
+              style={{
+                fontSize: "14pt",
                 fontWeight: "bold",
                 color: "#2c3e50",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
               }}
             >
               CERTIFICATIONS
@@ -539,39 +530,39 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ forwarde
             {resumeData.certifications.map((cert, index) => (
               <div key={index} className="mb-3">
                 <div className="flex justify-between items-baseline">
-                  <span 
-                    style={{ 
-                      fontSize: "12pt", 
+                  <span
+                    style={{
+                      fontSize: "12pt",
                       fontWeight: "bold",
-                      color: "#2c3e50"
+                      color: "#2c3e50",
                     }}
                   >
                     {cert.name}
                   </span>
-                  <span 
-                    style={{ 
-                      fontSize: "10pt", 
+                  <span
+                    style={{
+                      fontSize: "10pt",
                       color: "#718096",
-                      fontWeight: "normal"
+                      fontWeight: "normal",
                     }}
                   >
                     {cert.date}
                   </span>
                 </div>
-                <p 
-                  style={{ 
-                    fontSize: "11pt", 
-                    color: "#4a5568"
+                <p
+                  style={{
+                    fontSize: "11pt",
+                    color: "#4a5568",
                   }}
                 >
                   {cert.issuer}
                 </p>
                 {cert.description && (
-                  <p 
+                  <p
                     className="pl-5 mb-1"
-                    style={{ 
-                      fontSize: "11pt", 
-                      color: "#4a5568"
+                    style={{
+                      fontSize: "11pt",
+                      color: "#4a5568",
                     }}
                   >
                     {cert.description}

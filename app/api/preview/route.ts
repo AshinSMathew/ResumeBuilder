@@ -62,7 +62,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch user ID
     const userResult = await db('SELECT id, name, email, phone_number FROM users WHERE email = $1', [userEmail]);
     if (!userResult || userResult.length === 0) {
       return NextResponse.json(
@@ -72,7 +71,6 @@ export async function GET(request: NextRequest) {
     }
     const userId = userResult[0].id;
 
-    // Fetch all data in parallel
     const [
       personalDetails,
       userDataResult,
@@ -83,11 +81,8 @@ export async function GET(request: NextRequest) {
       db('SELECT skill_name FROM skills WHERE user_id = $1', [userId])
     ]);
 
-    // Process user data
     const userData = userDataResult[0] || {};
     const personalDetail = personalDetails[0] || {};
-
-    // Process skills data
     const skills = skillsResult.flatMap(row => {
       try {
         const skillData = row.skill_name;
@@ -103,7 +98,6 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Process JSONB data from user_data
     const parseJsonbField = (field: any) => {
       try {
         return field ? field : [];
@@ -119,7 +113,6 @@ export async function GET(request: NextRequest) {
     const certifications = parseJsonbField(userData.certifications);
     const achievements = parseJsonbField(userData.achievements);
 
-    // Structure the response
     const resumeData: ResumeData = {
       user: {
         name: personalDetail.full_name || userResult[0].name,

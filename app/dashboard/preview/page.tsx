@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import DashboardLayout from "@/components/dashboard-layout"
-import { Edit, Download, Share } from "lucide-react"
+import { Edit, Download, Share, Loader2 } from "lucide-react"
 import ResumePreview from "@/components/resume/resume-preview"
 import { jsPDF } from "jspdf"
 import html2canvas from "html2canvas"
@@ -24,34 +24,66 @@ export default function PreviewPage() {
 
     try {
       setIsDownloading(true)
-      const canvas = await html2canvas(resumeRef.current, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-      })
 
+      // Get the resume container
+      const resumeContainer = resumeRef.current
+
+      // Create a new jsPDF instance
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
       })
 
-      const imgData = canvas.toDataURL('image/png')
+      // Get dimensions
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = pdf.internal.pageSize.getHeight()
 
-      const canvasRatio = canvas.height / canvas.width
-      const pdfRatio = pdfHeight / pdfWidth
-      
-      let imgWidth = pdfWidth
-      let imgHeight = pdfWidth * canvasRatio
+      // Calculate the number of pages needed
+      const containerHeight = resumeContainer.scrollHeight
+      const containerWidth = resumeContainer.scrollWidth
+      const scale = pdfWidth / containerWidth
+      const scaledHeight = containerHeight * scale
+      const totalPages = Math.ceil(scaledHeight / pdfHeight)
 
-      if (imgHeight > pdfHeight) {
-        imgHeight = pdfHeight
-        imgWidth = pdfHeight / canvasRatio
+      // Create canvas for each page
+      for (let i = 0; i < totalPages; i++) {
+        // Only add a new page if it's not the first page
+        if (i > 0) {
+          pdf.addPage()
+        }
+
+        // Calculate the portion of the container to capture for this page
+        const yPosition = (pdfHeight / scale) * i
+
+        // Create a clone of the container to manipulate for this page
+        const tempContainer = resumeContainer.cloneNode(true) as HTMLElement
+        tempContainer.style.transform = `translateY(-${yPosition}px)`
+        tempContainer.style.height = `${pdfHeight / scale}px`
+        tempContainer.style.overflow = "hidden"
+
+        // Temporarily append to the document to capture
+        document.body.appendChild(tempContainer)
+
+        // Capture this portion as canvas
+        const canvas = await html2canvas(tempContainer, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          windowHeight: pdfHeight / scale,
+          y: yPosition,
+        })
+
+        // Remove the temporary element
+        document.body.removeChild(tempContainer)
+
+        // Add the image to the PDF
+        const imgData = canvas.toDataURL("image/png")
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
       }
-      pdf.addImage(imgData, 'PNG', (pdfWidth - imgWidth) / 2, (pdfHeight - imgHeight) / 2, imgWidth, imgHeight)
+
+      // Save the PDF
       pdf.save("resume.pdf")
     } catch (error) {
       console.error("Error generating PDF:", error)
@@ -77,7 +109,7 @@ export default function PreviewPage() {
             <Button variant="outline" size="sm" onClick={handleDownload} disabled={isDownloading}>
               {isDownloading ? (
                 <>
-                  <span className="mr-2 h-4 w-4 animate-spin inline-block">↻</span>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Generating...
                 </>
               ) : (
