@@ -8,7 +8,6 @@ import DashboardLayout from "@/components/dashboard-layout"
 import { Edit, Download, Share, Loader2 } from "lucide-react"
 import ResumePreview from "@/components/resume/resume-preview"
 import { jsPDF } from "jspdf"
-import html2canvas from "html2canvas"
 
 export default function PreviewPage() {
   const router = useRouter()
@@ -20,59 +19,41 @@ export default function PreviewPage() {
   }
 
   const handleDownload = async () => {
-    if (!resumeRef.current) return
-  
+    setIsDownloading(true)
+    
     try {
-      setIsDownloading(true)
-  
-      const resumeContainer = resumeRef.current
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      })
-  
-      const margin = 10
-      const pdfWidth = pdf.internal.pageSize.getWidth() - (margin * 2)
-      const pdfHeight = pdf.internal.pageSize.getHeight() - (margin * 2)
-      const containerHeight = resumeContainer.scrollHeight
-      const containerWidth = resumeContainer.scrollWidth
-      const scale = pdfWidth / containerWidth
-      const scaledHeight = containerHeight * scale
-      const totalPages = Math.ceil(scaledHeight / pdfHeight)
-
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) {
-          pdf.addPage()
+      // Direct API approach for server-side PDF generation with selectable text
+      const response = await fetch('/api/download-pdf', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
         }
-  
-        const yPosition = (pdfHeight / scale) * i
-  
-        const tempContainer = resumeContainer.cloneNode(true) as HTMLElement
-        tempContainer.style.transform = `translateY(-${yPosition}px)`
-        tempContainer.style.height = `${pdfHeight / scale}px`
-        tempContainer.style.overflow = "hidden"
-
-        document.body.appendChild(tempContainer)
-        const canvas = await html2canvas(tempContainer, {
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          windowHeight: pdfHeight / scale,
-          y: yPosition,
-        })
-        document.body.removeChild(tempContainer)
-
-        const imgData = canvas.toDataURL("image/png")
-        pdf.addImage(imgData, "PNG", margin, margin, pdfWidth, pdfHeight)
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF from server");
       }
-      pdf.save("resume.pdf")
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'resume.pdf';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
     } catch (error) {
-      console.error("Error generating PDF:", error)
-      alert("Failed to generate PDF. Please try again.")
+      console.error("Error generating PDF:", error);
+      alert("Failed to download PDF. Please try again.");
     } finally {
-      setIsDownloading(false)
+      setIsDownloading(false);
     }
   }
 
@@ -110,7 +91,9 @@ export default function PreviewPage() {
         </div>
 
         <Card className="overflow-hidden border p-0">
-          <ResumePreview forwardedRef={resumeRef} />
+          <div className="pdf-container" ref={resumeRef}>
+            <ResumePreview forwardedRef={resumeRef} />
+          </div>
         </Card>
       </div>
     </DashboardLayout>
